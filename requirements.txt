@@ -5,3 +5,5 @@ matplotlib
 jupyter
 pandas
 scikit-learn
+nltk
+xgboost
