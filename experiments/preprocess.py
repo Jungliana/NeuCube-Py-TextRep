@@ -1,23 +1,26 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
 from nltk import download
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
-from sklearn.decomposition import TruncatedSVD
 from torch import FloatTensor
 
 from neucube.encoder import Probability
-from experiments.params import stop_words, random_seed
+from experiments.params import random_seed
 
 
 class TextPrep:
 
-    def __init__(self, svd_components: int = 1000, prob_iterations: int = 500):
+    def __init__(
+            self, svd_components: int = 1000, prob_iterations: int = 500, max_features: int = 5000
+            ):
         download('punkt')
         self.stemmer = PorterStemmer()
         self.vectorizer = TfidfVectorizer(
             strip_accents="ascii",
             lowercase=True,
-            preprocessor=self.preprocess_and_stem, stop_words=stop_words
+            preprocessor=self.preprocess_and_stem,
+            max_features=max_features,
             )
         self.svd = TruncatedSVD(n_components=svd_components, random_state=random_seed)
         self.encoder = Probability(iterations=prob_iterations)
@@ -33,7 +36,9 @@ class TextPrep:
         train_x = self.vectorizer.fit_transform(sklearn_dataset.data)
         if lsa:
             train_x = self.svd.fit_transform(train_x)
-        train_x = FloatTensor(train_x).relu()  # no negative values
+        else:
+            train_x = train_x.toarray()
+        train_x = FloatTensor(train_x)
         if spikes:
             train_x = self.encoder.encode_dataset(train_x)
 

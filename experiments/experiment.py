@@ -1,7 +1,3 @@
-from neucube import Reservoir
-from neucube.validation import Pipeline
-from neucube.sampler import SpikeCount
-
 from sklearn.metrics import accuracy_score as accuracy
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import KFold
@@ -10,8 +6,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
-
 from tqdm import tqdm
+
+from neucube import Reservoir
+from neucube.validation import Pipeline
+from neucube.sampler import SpikeCount
 
 
 def get_classifier(clf_type: str = "regression"):
@@ -26,15 +25,15 @@ def get_classifier(clf_type: str = "regression"):
     return SVC(kernel='linear')
 
 
-def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123):
-    kf = KFold(n_splits=5, shuffle=True, random_state=seed)
+def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123, splits: int = 5):
+    kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
     for train_index, test_index in tqdm(kf.split(data_x)):
         x_train, x_test = data_x[train_index], data_x[test_index]
         y_train, y_test = data_y[train_index], data_y[test_index]
 
-        res = Reservoir(inputs=data_x.shape[2], cube_shape=(8, 8, 8))
+        res = Reservoir(inputs=data_x.shape[2], cube_shape=(9, 9, 9))
         sam = SpikeCount()
         clf = get_classifier(clf_type)
         pipe = Pipeline(res, sam, clf)
@@ -48,8 +47,8 @@ def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123
     print(confusion_matrix(y_total, pred_total))
 
 
-def lsa_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123):
-    kf = KFold(n_splits=5, shuffle=True, random_state=seed)
+def lsa_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123, splits: int = 5):
+    kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
     for train_index, test_index in tqdm(kf.split(data_x)):
