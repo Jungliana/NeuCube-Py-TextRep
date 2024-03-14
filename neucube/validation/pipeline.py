@@ -70,6 +70,17 @@ class Pipeline():
         return pred
 
     def train_reservoir(self, X_train, train=True):
+        """
+        Trains only the reservoir using the provided input data.
+
+        Args:
+            X_train: The input data for training.
+            train: Optional boolean indicating if the reservoir should be trained or not.
+                   Default is True.
+
+        Returns:
+            Normalized Reservoir state after sampling.
+        """
         s_act = self.res_model.simulate(X_train, train=train, verbose=False)
         state = self.sampling_method.sample(s_act)
         return normalize(state)

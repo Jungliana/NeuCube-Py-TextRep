@@ -11,6 +11,10 @@ from tqdm import tqdm
 from neucube import Reservoir
 from neucube.validation import Pipeline
 from neucube.sampler import SpikeCount
+from experiments.params import random_seed
+
+
+CLASSIFIERS = ["regression", "random_forest", "xgboost", "svc", "naive_bayes"]
 
 
 def get_classifier(clf_type: str = "regression"):
@@ -25,7 +29,8 @@ def get_classifier(clf_type: str = "regression"):
     return SVC(kernel='linear')
 
 
-def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123, splits: int = 5):
+def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = random_seed,
+                   splits: int = 5, shape: tuple[int] = (10, 10, 10)):
     kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
@@ -33,7 +38,7 @@ def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123
         x_train, x_test = data_x[train_index], data_x[test_index]
         y_train, y_test = data_y[train_index], data_y[test_index]
 
-        res = Reservoir(inputs=data_x.shape[2], cube_shape=(9, 9, 9))
+        res = Reservoir(inputs=data_x.shape[2], cube_shape=shape)
         sam = SpikeCount()
         clf = get_classifier(clf_type)
         pipe = Pipeline(res, sam, clf)
@@ -43,11 +48,12 @@ def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123
 
         y_total.extend(y_test)
         pred_total.extend(pred)
-    print(accuracy(y_total, pred_total))
+    print(f'---- CLASSIFIER: {clf_type} ----')
+    print(f'acc: {accuracy(y_total, pred_total)}')
     print(confusion_matrix(y_total, pred_total))
 
 
-def lsa_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123, splits: int = 5):
+def lsa_experiment(data_x, data_y, clf_type: str = "regression", seed: int = random_seed, splits: int = 5):
     kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
@@ -61,5 +67,40 @@ def lsa_experiment(data_x, data_y, clf_type: str = "regression", seed: int = 123
 
         y_total.extend(y_test)
         pred_total.extend(pred)
-    print(accuracy(y_total, pred_total))
+    print(f'\n---- CLASSIFIER: {clf_type} ----')
+    print(f'acc: {accuracy(y_total, pred_total)}')
     print(confusion_matrix(y_total, pred_total))
+
+
+def snn_multiple_clfs(data_x, data_y, seed: int = random_seed,
+                      splits: int = 10, shape: tuple[int] = (10, 10, 10)):
+    kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
+    states = []
+    indices = kf.split(data_x)
+
+    for train_index, test_index in tqdm(indices):
+        x_train, _ = data_x[train_index], data_x[test_index]
+
+        res = Reservoir(inputs=data_x.shape[2], cube_shape=shape)
+        sam = SpikeCount()
+        pipe = Pipeline(res, sam, None)
+        state = pipe.train_reservoir(x_train, train=False)
+        states.append(state)
+
+    for clf_type in CLASSIFIERS:
+        y_total, pred_total = [], []
+        clf = get_classifier(clf_type)
+        for state, train_test_index in tqdm(zip(states, indices)):
+            train_index, test_index = train_test_index
+            _, x_test = data_x[train_index], data_x[test_index]
+            y_train, y_test = data_y[train_index], data_y[test_index]
+
+            pipe.classifier = clf
+            clf.fit(state, y_train)
+            pred = pipe.predict(x_test)
+            y_total.extend(y_test)
+            pred_total.extend(pred)
+
+        print(f'---- CLASSIFIER: {clf_type} ----')
+        print(f'acc: {accuracy(y_total, pred_total)}')
+        print(confusion_matrix(y_total, pred_total))
