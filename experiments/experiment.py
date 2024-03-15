@@ -30,7 +30,7 @@ def get_classifier(clf_type: str = "regression"):
 
 
 def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = random_seed,
-                   splits: int = 5, shape: tuple[int] = (10, 10, 10)):
+                   splits: int = 5, shape: tuple[int] = (10, 10, 10), res_train: bool = True):
     kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
@@ -43,7 +43,7 @@ def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = ran
         clf = get_classifier(clf_type)
         pipe = Pipeline(res, sam, clf)
 
-        pipe.fit(x_train, y_train, train=True)
+        pipe.fit(x_train, y_train, train=res_train)
         pred = pipe.predict(x_test)
 
         y_total.extend(y_test)

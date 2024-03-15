@@ -4,7 +4,7 @@ from nltk import download
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from torch import FloatTensor, tensor
-from numpy import resize
+from numpy import tile
 
 from neucube.encoder import Probability
 from experiments.params import random_seed
@@ -59,27 +59,30 @@ class Word2VecPrep:
         return tokens
 
     # Function to convert text to a fixed-size vector using Word2Vec
-    def text_to_vector(self, text, avg: bool = True):
+    def text_to_vector(self, text, avg: bool = True, max_size: int = 100):
         tokens = self.preprocess_text(text)
 
         # Filter tokens present in the Word2Vec model
         words = [word for word in tokens if word in self.word2vec]
 
-        if not words:  # or (len(words) < 50):
+        if not words:
             return None
 
         if avg:
             # Calculate the average vector
             return sum(self.word2vec[words]) / len(words)
 
-        embeddings = resize(self.word2vec[words], (300, 300))
+        embeddings = self.word2vec[words]
+        array_length = len(embeddings)
+        if array_length < max_size:
+            repetitions = (max_size + array_length - 1) // array_length
+            embeddings = tile(embeddings, (repetitions, 1))[:max_size]
+        else:
+            embeddings = embeddings[:max_size]
         return embeddings
 
-    def preprocess_dataset(self, sklearn_dataset, avg: bool = True):
-        # newsgroups_vectors = []
-        # for text in sklearn_dataset.data:
-        #     newsgroups_vectors.append(self.text_to_vector(text, avg=True))
-        newsgroups_vectors = [self.text_to_vector(text, avg=avg) for text in sklearn_dataset.data]
+    def preprocess_dataset(self, sklearn_dataset, avg: bool = True, max_size: int = 100):
+        newsgroups_vectors = [self.text_to_vector(text, avg, max_size) for text in sklearn_dataset.data]
         # Remove instances where text could not be converted to vectors
         newsgroups_vectors = [vec for vec in newsgroups_vectors if vec is not None]
         train_x = tensor(newsgroups_vectors)

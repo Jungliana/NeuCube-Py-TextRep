@@ -1,0 +1,80 @@
+
+> no matrix repeating, 100 spike rows, mask = spike_train_x >= 0.15
+snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(5, 5, 5))
+5it [10:52, 130.57s/it]
+---- CLASSIFIER: regression ----
+acc: 0.7385398981324278
+[[374 210]
+ [ 98 496]]
+
+> matrix repeating, 150 spike rows, mask = spike_train_x >= 0.15
+snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(5, 5, 5))
+ 5it [15:53, 190.65s/it]
+---- CLASSIFIER: regression ----
+acc: 0.7368421052631579
+[[357 227]
+ [ 83 511]]
+
+> matrix repeating, 100 spike rows, no reservoir training, mask = spike_train_x >= 0.15
+snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(5, 5, 5), res_train=False)
+ 5it [06:52, 82.41s/it]
+---- CLASSIFIER: regression ----
+acc: 0.6561969439728353
+[[308 276]
+ [129 465]]
+
+> matrix repeating, 100 spike rows, mask = spike_train_x >= 0.15
+snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(4, 4, 4), res_train=True)
+ 5it [10:18, 123.63s/it]
+---- CLASSIFIER: regression ----
+acc: 0.7122241086587436
+[[347 237]
+ [102 492]]
+
+> matrix repeating, 100 spike rows, mask = spike_train_x >= 0.15
+snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(8, 8, 8), res_train=True)
+ 5it [10:34, 126.95s/it]
+---- CLASSIFIER: regression ----
+acc: 0.7631578947368421
+[[384 200]
+ [ 79 515]]
+
+ > matrix repeating, 100 spike rows, mask = spike_train_x >= 0.1
+ snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(8, 8, 8), res_train=True)
+ 5it [10:43, 128.74s/it]
+---- CLASSIFIER: regression ----
+acc: 0.5407470288624788
+[[181 403]
+ [138 456]]
+
+ > matrix repeating, 100 spike rows, mask = spike_train_x >= 0.2
+ snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(8, 8, 8), res_train=True)
+ 5it [10:38, 127.74s/it]
+---- CLASSIFIER: regression ----
+acc: 0.9032258064516129
+[[519  65]
+ [ 49 545]]
+
+  > matrix repeating, 150 spike rows, mask = spike_train_x >= 0.2
+ snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(8, 8, 8), res_train=True)
+ 5it [15:52, 190.56s/it]
+---- CLASSIFIER: regression ----
+acc: 0.9100169779286927
+[[533  51]
+ [ 55 539]]
+
+   > matrix repeating, 200 spike rows, mask = spike_train_x >= 0.2
+ snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(8, 8, 8), res_train=True)
+5it [21:03, 252.79s/it]
+---- CLASSIFIER: regression ----
+acc: 0.9117147707979627
+[[529  55]
+ [ 49 545]]
+
+> matrix repeating, 100 spike rows, mask = spike_train_x >= 0.25
+snn_experiment(data_x, spike_train_y, clf_type="regression", splits=5, shape=(8, 8, 8), res_train=True)
+ 5it [10:34, 126.82s/it]
+---- CLASSIFIER: regression ----
+acc: 0.9142614601018676
+[[537  47]
+ [ 54 540]]
