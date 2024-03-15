@@ -75,11 +75,11 @@ class Word2VecPrep:
         embeddings = resize(self.word2vec[words], (300, 300))
         return embeddings
 
-    def preprocess_dataset(self, sklearn_dataset):
+    def preprocess_dataset(self, sklearn_dataset, avg: bool = True):
         # newsgroups_vectors = []
         # for text in sklearn_dataset.data:
         #     newsgroups_vectors.append(self.text_to_vector(text, avg=True))
-        newsgroups_vectors = [self.text_to_vector(text, avg=True) for text in sklearn_dataset.data]
+        newsgroups_vectors = [self.text_to_vector(text, avg=avg) for text in sklearn_dataset.data]
         # Remove instances where text could not be converted to vectors
         newsgroups_vectors = [vec for vec in newsgroups_vectors if vec is not None]
         train_x = tensor(newsgroups_vectors)
