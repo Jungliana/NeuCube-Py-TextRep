@@ -70,7 +70,7 @@ class Word2VecPrep:
 
         if avg:
             # Calculate the average vector
-            return sum(self.word2vec[words]) / len(words)
+            return sum((self.word2vec[words])[:max_size]) / max_size
 
         embeddings = self.word2vec[words]
         array_length = len(embeddings)
