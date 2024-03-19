@@ -3,8 +3,8 @@ from sklearn.decomposition import TruncatedSVD
 from nltk import download
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
-from torch import FloatTensor, tensor
-from numpy import tile
+from torch import FloatTensor
+from numpy import tile, array
 
 from neucube.encoder import Probability
 from experiments.params import random_seed
@@ -85,7 +85,7 @@ class Word2VecPrep:
         newsgroups_vectors = [self.text_to_vector(text, avg, max_size) for text in sklearn_dataset.data]
         # Remove instances where text could not be converted to vectors
         newsgroups_vectors = [vec for vec in newsgroups_vectors if vec is not None]
-        train_x = tensor(newsgroups_vectors)
+        train_x = FloatTensor(array(newsgroups_vectors))
 
         train_y = sklearn_dataset.target
         train_y = FloatTensor(train_y)

@@ -29,8 +29,10 @@ def get_classifier(clf_type: str = "regression"):
     return SVC(kernel='linear')
 
 
-def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = random_seed,
-                   splits: int = 5, shape: tuple[int] = (10, 10, 10), res_train: bool = True):
+def snn_experiment(data_x, data_y, clf_type: str = "regression",
+                   seed: int = random_seed,
+                   splits: int = 5, shape: tuple[int] = (10, 10, 10),
+                   res_train: bool = True):
     kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
@@ -53,7 +55,10 @@ def snn_experiment(data_x, data_y, clf_type: str = "regression", seed: int = ran
     print(confusion_matrix(y_total, pred_total))
 
 
-def lsa_experiment(data_x, data_y, clf_type: str = "regression", seed: int = random_seed, splits: int = 5):
+def lsa_experiment(data_x, data_y,
+                   clf_type: str = "regression",
+                   seed: int = random_seed,
+                   splits: int = 5):
     kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
