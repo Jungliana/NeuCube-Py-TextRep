@@ -1,5 +1,5 @@
 from sklearn.metrics import accuracy_score as accuracy
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 from sklearn.model_selection import KFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -19,7 +19,7 @@ CLASSIFIERS = ["regression", "random_forest", "xgboost", "svc", "naive_bayes"]
 
 def get_classifier(clf_type: str = "regression"):
     if clf_type == "regression":
-        return LogisticRegression(solver='liblinear')
+        return LogisticRegression(solver='saga', multi_class='multinomial', penalty="l2")
     if clf_type == "random_forest":
         return RandomForestClassifier()
     if clf_type == "xgboost":
@@ -52,6 +52,9 @@ def snn_experiment(data_x, data_y, clf_type: str = "regression",
         pred_total.extend(pred)
     print(f'---- CLASSIFIER: {clf_type} ----')
     print(f'acc: {accuracy(y_total, pred_total)}')
+    print(f'micro: {f1_score(y_total, pred_total, average="micro")}')
+    print(f'macro: {f1_score(y_total, pred_total, average="macro")}')
+    print(f'weighted: {f1_score(y_total, pred_total, average="weighted")}')
     print(confusion_matrix(y_total, pred_total))
 
 
@@ -74,6 +77,9 @@ def lsa_experiment(data_x, data_y,
         pred_total.extend(pred)
     print(f'\n---- CLASSIFIER: {clf_type} ----')
     print(f'acc: {accuracy(y_total, pred_total)}')
+    print(f'micro: {f1_score(y_total, pred_total, average="micro")}')
+    print(f'macro: {f1_score(y_total, pred_total, average="macro")}')
+    print(f'weighted: {f1_score(y_total, pred_total, average="weighted")}')
     print(confusion_matrix(y_total, pred_total))
 
 
