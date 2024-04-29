@@ -4,7 +4,7 @@ from nltk import download
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from torch import FloatTensor
-from numpy import tile, array
+from numpy import tile, array, clip
 
 from neucube.encoder import Probability
 from experiments.params import random_seed
@@ -59,7 +59,8 @@ class EmbeddingPrep:
         return tokens
 
     # Function to convert text to a fixed-size vector using Word2Vec
-    def text_to_vector(self, text, avg: bool = True, max_size: int = 100):
+    def text_to_vector(self, text, avg: bool = True, max_size: int = 100,
+                       avg_normalization: bool = False):
         tokens = self.preprocess_text(text)
 
         # Filter tokens present in the Word2Vec model
@@ -70,7 +71,10 @@ class EmbeddingPrep:
 
         if avg:
             # Calculate the average vector
-            return sum((self.word2vec[words])[:max_size]) / max_size
+            average_vector = sum((self.word2vec[words])[:max_size]) / max_size
+            if avg_normalization:
+                average_vector = (clip(average_vector, -1., 1.) + 1) / 2
+            return average_vector
 
         embeddings = self.word2vec[words]
         array_length = len(embeddings)
@@ -81,8 +85,10 @@ class EmbeddingPrep:
             embeddings = embeddings[:max_size]
         return embeddings
 
-    def preprocess_dataset(self, sklearn_dataset, avg: bool = True, max_size: int = 100):
-        newsgroups_vectors = [self.text_to_vector(text, avg, max_size) for text in sklearn_dataset.data]
+    def preprocess_dataset(self, sklearn_dataset, avg: bool = True, max_size: int = 100,
+                           avg_normalization: bool = False):
+        newsgroups_vectors = [self.text_to_vector(
+            text, avg, max_size, avg_normalization) for text in sklearn_dataset.data]
         # Remove instances where text could not be converted to vectors
         newsgroups_vectors = [vec for vec in newsgroups_vectors if vec is not None]
         train_x = FloatTensor(array(newsgroups_vectors))

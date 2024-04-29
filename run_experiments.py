@@ -30,11 +30,11 @@ num_words = [50, 100]  # how many words we take from embedded sentence (probably
 lsa_components = [500, 1000, 2000, 5000]
 lsa_normalization = False
 embedding_models = ["glove-wiki-gigaword-300"]  # ["word2vec-google-news-300", "glove-wiki-gigaword-300"]
+norm_embeddings = [False, True]
 
 # experiment params
 classfier_types = ["regression", "random_forest", "xgboost"]
 param_cube_shapes = [(6, 6, 6), (8, 8, 8), (10, 10, 10), (12, 12, 12)]
-norm_embeddings = [False, True]
 
 
 # START
@@ -44,13 +44,14 @@ dataset = fetch_20newsgroups(subset='test', categories=categories, remove=('quot
 all_results = []
 
 if embedding:
-    for prep_params in itertools.product(num_words, embedding_models):
+    for prep_params in itertools.product(num_words, embedding_models, norm_embeddings):
         print("--- Preprocessing data... ---")
-        num_word, embedding_model = prep_params
+        num_word, embedding_model, norm_embedding = prep_params
         # preprocessing
         model = api.load(embedding_model)
         text_prep = EmbeddingPrep(model)
-        train_x, train_y = text_prep.preprocess_dataset(dataset, avg=True, max_size=num_word)
+        train_x, train_y = text_prep.preprocess_dataset(dataset, avg=True, max_size=num_word,
+                                                        avg_normalization=norm_embedding)
         train_x.to(device)
         train_y.to(device)
 
@@ -58,18 +59,17 @@ if embedding:
         if spiking:
             pass
         else:
-            for exp_params in itertools.product(classfier_types, norm_embeddings):
-                classfier_type, norm_embedding = exp_params
+            for classfier_type in classfier_types:
                 results = experiment(data_x=train_x,
                                      data_y=train_y,
                                      seed=seed,
                                      clf_type=classfier_type,
                                      splits=5)
-                all_results.append(list(prep_params)+list(exp_params)+results)
+                all_results.append(list(prep_params)+[classfier_type]+results)
 
 else:
     pass
     # experiments
 
 df = pd.DataFrame(all_results)
-df.to_csv("results/test.csv")
+df.to_csv("results/test2.csv")
