@@ -10,7 +10,7 @@ from neucube.encoder import Probability
 from experiments.params import random_seed
 
 
-class TextPrep:
+class LSAPrep:
 
     def __init__(
             self, svd_components: int = 1000, prob_iterations: int = 500, max_features: int = 5000
@@ -48,7 +48,7 @@ class TextPrep:
         return train_x, train_y
 
 
-class Word2VecPrep:
+class EmbeddingPrep:
     def __init__(self, word2vec_model) -> None:
         download('punkt')
         self.word2vec = word2vec_model
