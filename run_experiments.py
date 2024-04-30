@@ -3,6 +3,7 @@ import torch
 from tqdm import tqdm
 import gensim.downloader as api
 import pandas as pd
+import datetime
 from sklearn.datasets import fetch_20newsgroups
 from experiments.preprocess import LSAPrep, EmbeddingPrep 
 from experiments.experiment import experiment
@@ -10,8 +11,8 @@ from experiments.experiment import experiment
 
 # common params
 seed = 1234
-spiking = False
-embedding = True
+spiking = True
+embedding = False
 
 # Preprocessing types:
 # - TF-IDF + LSA
@@ -25,16 +26,16 @@ embedding = True
 
 # preprocessing params
 categories = ['comp.graphics', 'sci.med']  # If None, load all the categories. If not None, list of category names to load
-len_spikes = [50, 100, 150, 200]  # how many iterations of spike encoding are there
+len_spikes = [10, 50]  #, 100, 150, 200]  # how many iterations of spike encoding are there
 num_words = [50, 100]  # how many words we take from embedded sentence (probably the same as len_spikes)
-lsa_components = [500, 1000, 2000, 5000]
-lsa_normalization = False
+lsa_components = [500, 1000]  #, 2000, 5000]
+lsa_normalizations = [False, True]
 embedding_models = ["glove-wiki-gigaword-300"]  # ["word2vec-google-news-300", "glove-wiki-gigaword-300"]
 norm_embeddings = [False, True]
 
 # experiment params
-classfier_types = ["regression", "random_forest", "xgboost"]
-param_cube_shapes = [(6, 6, 6), (8, 8, 8), (10, 10, 10), (12, 12, 12)]
+classifier_types = ["regression", "random_forest", "xgboost"]
+cube_shapes = [(6, 6, 6), (8, 8, 8)] #, (10, 10, 10), (12, 12, 12)]
 
 
 # START
@@ -57,19 +58,75 @@ if embedding:
 
         print("--- Training... ---")
         if spiking:
-            pass
+            filename = f"results/test_embedding_spiking_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+            column_names = ["lsa_components", "norm_lsa", "len_spikes", "clf_type", "cube_shape",
+                            "accuracy", "f1_micro", "f1_macro", "f1_weighted"]
         else:
-            for classfier_type in classfier_types:
+            filename = f"results/test_embedding_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+            column_names = ["num_word", "embedding_model", "norm_embedding", "clf_type", "accuracy",
+                            "f1_micro", "f1_macro", "f1_weighted"]
+            for classifier_type in classifier_types:
                 results = experiment(data_x=train_x,
                                      data_y=train_y,
                                      seed=seed,
-                                     clf_type=classfier_type,
+                                     clf_type=classifier_type,
                                      splits=5)
-                all_results.append(list(prep_params)+[classfier_type]+results)
+                all_results.append(list(prep_params)+[classifier_type]+results)
+        df = pd.DataFrame(all_results, columns=column_names)
+        df.to_csv(filename)
+        all_results = []
 
 else:
-    pass
-    # experiments
+    if spiking:
+        column_names = ["lsa_components", "norm_lsa", "len_spikes", "clf_type", "cube_shape",
+                        "accuracy", "f1_micro", "f1_macro", "f1_weighted"]
+        for prep_params in itertools.product(lsa_components, lsa_normalizations, len_spikes):
+            print("--- Preprocessing data... ---")
+            lsa_component, lsa_normalization, len_spike = prep_params
+            # preprocessing
+            text_prep = LSAPrep(svd_components=lsa_component, prob_iterations=len_spike)
+            train_x, train_y = text_prep.preprocess_dataset(dataset, lsa=True, spikes=True,
+                                                            lsa_normalize=lsa_normalization)
+            train_x.to(device)
+            train_y.to(device)
 
-df = pd.DataFrame(all_results)
-df.to_csv("results/test2.csv")
+            print("--- Training... ---")
+            for exp_params in itertools.product(classifier_types, cube_shapes):
+                classifier_type, cube_shape = exp_params
+                results = experiment(data_x=train_x,
+                                     data_y=train_y,
+                                     seed=seed,
+                                     clf_type=classifier_type,
+                                     splits=5, spiking=True,
+                                     shape=cube_shape)
+                all_results.append(list(prep_params)+list(exp_params)+results)
+            filename = f"results/test_lsa_spiking_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+            df = pd.DataFrame(all_results, columns=column_names)
+            df.to_csv(filename)
+            all_results = []
+
+    else:
+        filename = f"results/test_lsa_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+        column_names = ["lsa_components", "norm_lsa", "clf_type",
+                        "accuracy", "f1_micro", "f1_macro", "f1_weighted"]
+        for prep_params in itertools.product(lsa_components, lsa_normalizations):
+            print("--- Preprocessing data... ---")
+            lsa_component, lsa_normalization = prep_params
+            # preprocessing
+            text_prep = LSAPrep(svd_components=lsa_component)
+            train_x, train_y = text_prep.preprocess_dataset(dataset, lsa=True, spikes=False,
+                                                            lsa_normalize=lsa_normalization)
+            train_x.to(device)
+            train_y.to(device)
+
+            print("--- Training... ---")
+            for classifier_type in classifier_types:
+                results = experiment(data_x=train_x,
+                                     data_y=train_y,
+                                     seed=seed,
+                                     clf_type=classifier_type,
+                                     splits=5)
+                all_results.append(list(prep_params)+[classifier_type]+results)
+
+        df = pd.DataFrame(all_results, columns=column_names)
+        df.to_csv(filename)

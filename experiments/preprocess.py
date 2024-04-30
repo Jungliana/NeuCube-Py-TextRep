@@ -4,6 +4,7 @@ from nltk import download
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from torch import FloatTensor
+from torch.nn.functional import normalize
 from numpy import tile, array, clip
 
 from neucube.encoder import Probability
@@ -13,15 +14,14 @@ from experiments.params import random_seed
 class LSAPrep:
 
     def __init__(
-            self, svd_components: int = 1000, prob_iterations: int = 500, max_features: int = 5000
+            self, svd_components: int = 1000, prob_iterations: int = 500
             ):
         download('punkt')
         self.stemmer = PorterStemmer()
         self.vectorizer = TfidfVectorizer(
             strip_accents="ascii",
             lowercase=True,
-            preprocessor=self.preprocess_and_stem,
-            max_features=max_features,
+            preprocessor=self.preprocess_and_stem
             )
         self.svd = TruncatedSVD(n_components=svd_components, random_state=random_seed)
         self.encoder = Probability(iterations=prob_iterations)
@@ -33,13 +33,16 @@ class LSAPrep:
         preprocessed_text = ' '.join(stems)
         return preprocessed_text
 
-    def preprocess_dataset(self, sklearn_dataset, lsa=True, spikes=True) -> tuple[FloatTensor, FloatTensor]:
+    def preprocess_dataset(self, sklearn_dataset, lsa=True,
+                           spikes=True, lsa_normalize=False) -> tuple[FloatTensor, FloatTensor]:
         train_x = self.vectorizer.fit_transform(sklearn_dataset.data)
         if lsa:
             train_x = self.svd.fit_transform(train_x)
         else:
             train_x = train_x.toarray()
         train_x = FloatTensor(train_x)
+        if lsa_normalize:
+            normalize(train_x, dim=0)
         if spikes:
             train_x = self.encoder.encode_dataset(train_x)
 
