@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from snntorch.spikegen import rate
 import torch
 
 
@@ -85,12 +86,8 @@ class Probability(Encoder):
         Returns:
             torch.Tensor: Encoded spike trains for the input dataset.
         """
-        spikes = torch.zeros((dataset.size(0), self.iterations, dataset.size(1)))
-
-        for iteration in range(self.iterations):
-            random_values = torch.rand_like(dataset)
-            mask = (random_values < dataset).float()
-            spikes[:, iteration, :] = mask
+        spikes = rate(dataset, num_steps=self.iterations)
+        spikes = spikes.swapaxes(0, 1)
         return spikes
 
     def encode(self, sample):
