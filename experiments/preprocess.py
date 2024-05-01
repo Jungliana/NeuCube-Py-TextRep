@@ -1,3 +1,5 @@
+import torch
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
 from nltk import download
@@ -89,13 +91,18 @@ class EmbeddingPrep:
         return embeddings
 
     def preprocess_dataset(self, sklearn_dataset, avg: bool = True, max_size: int = 100,
-                           avg_normalization: bool = False):
+                           avg_normalization: bool = False, spikes: bool = False, threshold: float = 0.25):
         newsgroups_vectors = [self.text_to_vector(
             text, avg, max_size, avg_normalization) for text in sklearn_dataset.data]
         # Remove instances where text could not be converted to vectors
         newsgroups_vectors = [vec for vec in newsgroups_vectors if vec is not None]
         train_x = FloatTensor(array(newsgroups_vectors))
-
+        if not avg:
+            mask = train_x >= threshold
+            train_x = torch.where(mask, torch.tensor(1), torch.tensor(0))
+        elif spikes:
+            encoder = Probability(iterations=max_size)
+            train_x = encoder.encode_dataset(train_x)
         train_y = sklearn_dataset.target
         train_y = FloatTensor(train_y)
         return train_x, train_y
