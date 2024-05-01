@@ -9,3 +9,4 @@ nltk
 xgboost
 gensim
 plotly
+snntorch
