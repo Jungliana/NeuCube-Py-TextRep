@@ -31,27 +31,28 @@ def experiment(data_x, data_y, seed,
     kf = KFold(n_splits=splits, shuffle=True, random_state=seed)
     y_total, pred_total = [], []
 
-    for train_index, test_index in tqdm(kf.split(data_x)):
-        x_train, x_test = data_x[train_index], data_x[test_index]
-        y_train, y_test = data_y[train_index], data_y[test_index]
+    with tqdm(kf.split(data_x)) as tqdm_kfsplit:
+        for train_index, test_index in tqdm_kfsplit:
+            x_train, x_test = data_x[train_index], data_x[test_index]
+            y_train, y_test = data_y[train_index], data_y[test_index]
 
-        clf = get_classifier(clf_type)
-        if spiking:
-            res = Reservoir(inputs=data_x.shape[2], cube_shape=shape)
-            sam = SpikeCount()
-            pipe = Pipeline(res, sam, clf)
+            clf = get_classifier(clf_type)
+            if spiking:
+                res = Reservoir(inputs=data_x.shape[2], cube_shape=shape)
+                sam = SpikeCount()
+                pipe = Pipeline(res, sam, clf)
 
-            pipe.fit(x_train, y_train, train=reservoir_train)
-            pred = pipe.predict(x_test)
+                pipe.fit(x_train, y_train, train=reservoir_train)
+                pred = pipe.predict(x_test)
 
-        else:
-            clf.fit(x_train, y_train)
-            pred = clf.predict(x_test)
+            else:
+                clf.fit(x_train, y_train)
+                pred = clf.predict(x_test)
 
-        y_total.extend(y_test)
-        pred_total.extend(pred)
-
-    return collect_metrics(y_total, pred_total, m_print, clf_type)
+            y_total.extend(y_test)
+            pred_total.extend(pred)
+    elapsed = tqdm_kfsplit.format_dict['elapsed']
+    return collect_metrics(y_total, pred_total, m_print, clf_type) + [elapsed]
 
 
 def collect_metrics(y_total, pred_total, m_print: bool, clf_type: str):
