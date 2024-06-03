@@ -9,9 +9,9 @@ from experiments.experiment import experiment
 
 
 # common params
-seed = 1234
-spiking = True
-embedding = False
+seed = 4321  #1234
+spiking = False
+embedding = True
 threshold = False
 
 # Preprocessing types:
@@ -25,19 +25,19 @@ threshold = False
 # - GLOVE + SPIKES (THRESHOLD-CODING)
 
 # preprocessing params
-categories = ['comp.graphics', 'sci.med', 'rec.motorcycles']  # If None, load all the categories. If not None, list of category names to load
-len_spikes = [100, 150, 200]  #, 100, 150, 200]  # how many iterations of spike encoding are there
-num_words = [150]  #200  # how many words we take from embedded sentence (probably the same as len_spikes)
-lsa_components = [500, 1000, 2000, 5000]  #, 2000, 5000]
+categories = None #['comp.graphics', 'sci.med', 'rec.motorcycles']  # If None, load all the categories. If not None, list of category names to load
+len_spikes = [200]  #, 100, 150, 200]  # how many iterations of spike encoding are there
+num_words = [200] #[50, 100, 150, 200]  #200  # how many words we take from embedded sentence (probably the same as len_spikes)
+lsa_components = [None]  #[216, 300, 512]  #,  2000, 5000] [1776]
 lsa_normalizations = [False]  #, True]
 embedding_models = ["word2vec-google-news-300"]  # ["word2vec-google-news-300", "glove-wiki-gigaword-300"]
 norm_embeddings = [False]
 spike_train_types = ["rate", "threshold"]
-mask_thresholds = [0.35]
+mask_thresholds = [0.35] #0.35 for word2vec,  0.65 for glove
 
 # experiment params
-classifier_types = ["regression", "random_forest", "xgboost"]
-cube_shapes = [(6, 6, 6)]  #, (8, 8, 8)]  #, (10, 10, 10), (12, 12, 12)]
+classifier_types = ["regression", "random_forest", "xgboost"]  #["regression",
+cube_shapes = [(6, 6, 6)]  #, (10, 10, 10), (12, 12, 12)]
 
 
 # START
@@ -52,8 +52,6 @@ if embedding:
         if threshold:
             column_names = ["embedding_model", "num_word", "mask_threshold", "clf_type", "cube_shape",
                             "accuracy", "f1_micro", "f1_macro", "f1_weighted", "time"]
-            # column_names = ["embedding_model", "num_word", "clf_type", "cube_shape",
-            #                 "accuracy", "f1_micro", "f1_macro", "f1_weighted", "time"]
             num_trainings = len(num_words) * len(embedding_models) * len(mask_thresholds) * len(classifier_types) * len(cube_shapes)
             for prep_params in itertools.product(embedding_models, num_words, mask_thresholds):
                 print("--- Preprocessing data... ---")
@@ -79,7 +77,7 @@ if embedding:
                                          shape=cube_shape)
                     all_results.append(list(prep_params)+list(exp_params)+results)
                     i_train += 1
-                filename = f"results/3cat-train_embedding100_threshold{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+                filename = f"results/all-train_embedding_threshold_4321_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
                 df = pd.DataFrame(all_results, columns=column_names)
                 df.to_csv(filename, index=False)
                 all_results = []
@@ -111,7 +109,7 @@ if embedding:
                                          shape=cube_shape)
                     all_results.append(list(prep_params)+list(exp_params)+results)
                     i_train += 1
-                filename = f"results/3cat-train_embedding100_rate{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+                filename = f"results/all-train_embedding_rate_4321_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
                 df = pd.DataFrame(all_results, columns=column_names)
                 df.to_csv(filename, index=False)
                 all_results = []
@@ -141,7 +139,7 @@ if embedding:
                                      splits=5, m_print=False)
                 all_results.append(list(prep_params)+[classifier_type]+results)
                 i_train += 1
-            filename = f"results/3cat-train_embedding100_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+            filename = f"results/all-train_embedding_4321_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
             df = pd.DataFrame(all_results, columns=column_names)
             df.to_csv(filename, index=False)
             all_results = []
@@ -155,8 +153,8 @@ else:
             print("--- Preprocessing data... ---")
             lsa_component, len_spike = prep_params
             # preprocessing
-            text_prep = LSAPrep(svd_components=lsa_component, prob_iterations=len_spike)
-            train_x, train_y = text_prep.preprocess_dataset(dataset, lsa=True, spikes=True,
+            text_prep = LSAPrep(svd_components=lsa_component, iterations=len_spike, max_feat=5000)
+            train_x, train_y = text_prep.preprocess_dataset(dataset, lsa=False, spikes=True,
                                                             lsa_normalize=False)
             train_x.to(device)
             train_y.to(device)
@@ -173,33 +171,35 @@ else:
                                      shape=cube_shape)
                 all_results.append(list(prep_params)+list(exp_params)+results)
                 i_train += 1
-            filename = f"results/train_lsa_spiking_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+            filename = f"results/all-train_tfidf5000_spiking_4321_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
             df = pd.DataFrame(all_results, columns=column_names)
             df.to_csv(filename, index=False)
             all_results = []
 
     else:
-        filename = f"results/3cat_lsa_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
-        column_names = ["lsa_components", "norm_lsa", "clf_type",
-                        "accuracy", "f1_micro", "f1_macro", "f1_weighted"]
-        for prep_params in itertools.product(lsa_components, lsa_normalizations):
+        column_names = ["lsa_components", "clf_type",
+                        "accuracy", "f1_micro", "f1_macro", "f1_weighted", "time"]
+        num_trainings = len(lsa_components) * len(classifier_types)
+        for lsa_component in lsa_components:
             print("--- Preprocessing data... ---")
-            lsa_component, lsa_normalization = prep_params
             # preprocessing
-            text_prep = LSAPrep(svd_components=lsa_component)
+            text_prep = LSAPrep(svd_components=lsa_component, max_feat=5000)
             train_x, train_y = text_prep.preprocess_dataset(dataset, lsa=True, spikes=False,
-                                                            lsa_normalize=lsa_normalization)
+                                                            lsa_normalize=False)
             train_x.to(device)
             train_y.to(device)
 
             print("--- Training... ---")
             for classifier_type in classifier_types:
+                print(f"--- [{i_train}/{num_trainings}] ---")
                 results = experiment(data_x=train_x,
                                      data_y=train_y,
                                      seed=seed,
                                      clf_type=classifier_type,
-                                     splits=5)
-                all_results.append(list(prep_params)+[classifier_type]+results)
-
-        df = pd.DataFrame(all_results, columns=column_names)
-        df.to_csv(filename, index=False)
+                                     splits=5, spiking=False)
+                all_results.append([lsa_component, classifier_type]+results)
+                i_train += 1
+            filename = f"results/all-train_tfidf5000_lsa_4321_{datetime.datetime.now().strftime('%Y-%m-%d_%H%M')}.csv"
+            df = pd.DataFrame(all_results, columns=column_names)
+            df.to_csv(filename, index=False)
+            all_results = []
