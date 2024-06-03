@@ -66,10 +66,10 @@ class Delta(Encoder):
         return spikes
 
 
-class Probability(Encoder):
+class Rate(Encoder):
     def __init__(self, iterations: int = 200):
         """
-        Initializes the Probability encoder with a number of iterations.
+        Initializes the Rate encoder with a number of iterations.
 
         Args:
             iterations (int, optional): number of iterations to generate spikes. Defaults to 200.
@@ -78,7 +78,7 @@ class Probability(Encoder):
 
     def encode_dataset(self, dataset: torch.Tensor) -> torch.Tensor:
         """
-        Encodes an input dataset using spike probability encoding.
+        Encodes an input dataset using Poisson spike-rate encoding.
 
         Args:
             dataset (torch.Tensor): Input dataset to be encoded.

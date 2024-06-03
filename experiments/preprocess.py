@@ -9,24 +9,25 @@ from torch import FloatTensor
 from torch.nn.functional import normalize
 from numpy import tile, array, clip
 
-from neucube.encoder import Probability
+from neucube.encoder import Rate
 from experiments.params import random_seed
 
 
 class LSAPrep:
 
     def __init__(
-            self, svd_components: int = 1000, prob_iterations: int = 500
+            self, svd_components: int = 1000, iterations: int = 500, max_feat: int = None
             ):
         download('punkt')
         self.stemmer = PorterStemmer()
         self.vectorizer = TfidfVectorizer(
             strip_accents="ascii",
             lowercase=True,
-            preprocessor=self.preprocess_and_stem
+            preprocessor=self.preprocess_and_stem,
+            max_features=max_feat
             )
         self.svd = TruncatedSVD(n_components=svd_components, random_state=random_seed)
-        self.encoder = Probability(iterations=prob_iterations)
+        self.encoder = Rate(iterations)
 
     def preprocess_and_stem(self, text: str):
         text = text.lower()
@@ -101,7 +102,7 @@ class EmbeddingPrep:
             mask = train_x >= threshold
             train_x = torch.where(mask, torch.tensor(1), torch.tensor(0))
         elif spikes:
-            encoder = Probability(iterations=max_size)
+            encoder = Rate(iterations=max_size)
             train_x = encoder.encode_dataset(train_x)
         train_y = sklearn_dataset.target
         train_y = FloatTensor(train_y)

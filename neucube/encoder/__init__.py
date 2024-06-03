@@ -1,1 +1,1 @@
-from .encoder import Delta, Probability
+from .encoder import Delta, Rate
